@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ads.txt Checker</title>
+    <title>Checker</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -44,7 +44,7 @@
             display: block;
             width: 100%;
             padding: 15px;
-            background-color: #ff4b4b;
+            background-color: #2F4F4F;
             color: white;
             border: none;
             border-radius: 5px;
@@ -53,7 +53,7 @@
             margin-bottom: 20px;
         }
         button:hover {
-            background-color: #ff3333;
+            background-color: #203737;
         }
         table {
             width: 100%;
@@ -85,7 +85,7 @@
 </head>
 <body>
 
-    <h1>Ads.txt & App-ads.txt Matcher</h1>
+    <h1>Matcher Ads.txt & App-ads.txt</h1>
 
     <div class="container">
         <div class="column">
@@ -150,10 +150,10 @@
                 
                 const cellStatus = document.createElement('td');
                 if (isFound) {
-                    cellStatus.textContent = "✅ НАЙДЕНО";
+                    cellStatus.textContent = "НАЙДЕНО";
                     cellStatus.className = "status-found";
                 } else {
-                    cellStatus.textContent = "❌ НЕТ В СПИСКЕ";
+                    cellStatus.textContent = "НЕТ В СПИСКЕ";
                     cellStatus.className = "status-missing";
                 }
 
