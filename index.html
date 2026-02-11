@@ -1,20 +1,57 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Checker</title>
+    <title>Ads.txt Checker & Line Matcher</title>
     <style>
+        /* Created by OstinUA for adWMG: Programmatic Monetization Company */
+        html {
+            overflow-y: scroll;
+        }
+        
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            max_width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             padding: 20px;
             background-color: #f0f2f6;
         }
-        h1 {
+        h1, h2 {
             text-align: center;
             color: #333;
+        }
+        .main-input-section {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #ccc;
+        }
+        .tab-button {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 16px;
+            font-weight: bold;
+            color: #666;
+            outline: none;
+        }
+        .tab-button.active {
+            color: #2F4F4F;
+            border-bottom: 3px solid #2F4F4F;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
         }
         .container {
             display: flex;
@@ -29,18 +66,28 @@
         label {
             font-weight: bold;
             margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         textarea {
             width: 100%;
-            height: 300px;
+            height: 200px;
             padding: 10px;
             border: 1px solid #ccc;
             border-radius: 5px;
             resize: vertical;
             font-family: monospace;
             box-sizing: border-box;
+            white-space: pre;
+            overflow-wrap: normal;
+            overflow-x: scroll;
         }
-        button {
+        #adsInput {
+            height: 200px; 
+            border: 2px solid #2F4F4F;
+        }
+        button.action-btn {
             display: block;
             width: 100%;
             padding: 15px;
@@ -52,7 +99,7 @@
             cursor: pointer;
             margin-bottom: 20px;
         }
-        button:hover {
+        button.action-btn:hover {
             background-color: #203737;
         }
         table {
@@ -62,15 +109,28 @@
             border-radius: 5px;
             overflow: hidden;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-top: 20px;
+            table-layout: fixed;
         }
         th, td {
             padding: 12px;
             text-align: left;
             border-bottom: 1px solid #eee;
+            word-wrap: break-word;
         }
         th {
             background-color: #f8f9fa;
         }
+        #platformTable th:nth-child(1) { width: 30%; } 
+        #platformTable th:nth-child(2) { width: 10%; } 
+        #platformTable th:nth-child(3) { width: 10%; } 
+        #platformTable th:nth-child(4) { width: 15%; } 
+        #platformTable th:nth-child(5) { width: 15%; } 
+        #platformTable th:nth-child(6) { width: 10%; } 
+
+        #lineTable th:nth-child(1) { width: 85%; }
+        #lineTable th:nth-child(2) { width: 15%; }
+
         .status-found {
             background-color: #d4edda;
             color: #155724;
@@ -81,85 +141,333 @@
             color: #721c24;
             font-weight: bold;
         }
+        .count-cell {
+            font-weight: bold;
+            text-align: center;
+        }
+        .line-cell {
+            font-family: monospace;
+            word-break: break-all;
+        }
+        .toggle-wrapper {
+            font-weight: normal;
+            font-size: 14px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .toggle-wrapper input {
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
-
-    <h1>Matcher Ads.txt & App-ads.txt</h1>
-
-    <div class="container">
-        <div class="column">
-            <label>1. Вставьте Ads.txt:</label>
-            <textarea id="adsInput" placeholder="Вставьте сюда содержимое ads.txt..."></textarea>
-        </div>
-        <div class="column">
-            <label>2. Что искать:</label>
-            <textarea id="partnersInput" placeholder="Google&#10;Adsolut (ignore)&#10;AppLovin"></textarea>
-        </div>
+    <div class="main-input-section">
+        <label for="adsInput">Paste App-ads.txt or Ads.txt file</label>
+        <textarea id="adsInput" placeholder="Paste the main app|ads.txt file content here..."></textarea>
     </div>
 
-    <button onclick="checkMatches()">Найти совпадения</button>
+    <div class="tabs">
+        <button class="tab-button active" onclick="openTab('platformCheck')">1. Platform Check</button>
+        <button class="tab-button" onclick="openTab('lineCheck')">2. Line Check</button>
+    </div>
 
-    <div id="resultsArea">
-        <table id="resultsTable" style="display: none;">
+    <div id="platformCheck" class="tab-content active">
+        <div class="container">
+            <div class="column">
+                <label>SSP Partners:
+                    <span class="toggle-wrapper">
+                        <input type="checkbox" id="showMissingToggle" onchange="checkPlatformMatches()"> Full information
+                    </span>
+                </label>
+                <textarea id="partnersInput" placeholder="1&#10;Google&#10;oRTB&#10;In-app&#10;Active&#10;&#10;2&#10;Adsolut..."></textarea>
+            </div>
+        </div>
+
+        <button class="action-btn" onclick="checkPlatformMatches()">Check Platforms</button>
+        
+        <table id="platformTable" style="display: none;">
             <thead>
                 <tr>
-                    <th>Партнер (Clean)</th>
-                    <th>Исходный запрос</th>
-                    <th>Статус</th>
+                    <th>Partner</th>
+                    <th>Type</th>
+                    <th>Env</th>
+                    <th>Source Status</th>
+                    <th>App|Ads.txt Status</th>
+                    <th>Count</th>
                 </tr>
             </thead>
-            <tbody id="tableBody"></tbody>
+            <tbody id="platformTableBody"></tbody>
+        </table>
+    </div>
+
+    <div id="lineCheck" class="tab-content">
+        <div class="container">
+            <div class="column">
+                <label>Check lines:</label>
+                <textarea id="checkLinesInput" placeholder="adwmg.com, 101481, DIRECT, ...&#10;google.com, pub-123, RESELLER..."></textarea>
+            </div>
+        </div>
+        <button class="action-btn" onclick="checkLineMatches()">Check Lines</button>
+        <table id="lineTable" style="display: none;">
+            <thead>
+                <tr>
+                    <th>Line</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="lineTableBody"></tbody>
         </table>
     </div>
 
     <script>
-        function checkMatches() {
+        document.addEventListener('DOMContentLoaded', () => {
+            loadState();
+        });
+
+        const inputs = ['adsInput', 'partnersInput', 'checkLinesInput', 'showMissingToggle'];
+        inputs.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('input', saveState);
+                if (el.type === 'checkbox') {
+                    el.addEventListener('change', saveState);
+                }
+            }
+        });
+
+        function saveState() {
+            inputs.forEach(id => {
+                const el = document.getElementById(id);
+                if (el.type === 'checkbox') {
+                    localStorage.setItem(id, el.checked);
+                } else {
+                    localStorage.setItem(id, el.value);
+                }
+            });
+        }
+
+        function loadState() {
+            inputs.forEach(id => {
+                const saved = localStorage.getItem(id);
+                if (saved !== null) {
+                    const el = document.getElementById(id);
+                    if (el.type === 'checkbox') {
+                        el.checked = (saved === 'true');
+                    } else {
+                        el.value = saved;
+                    }
+                }
+            });
+        }
+
+        function openTab(tabName) {
+            const contents = document.getElementsByClassName('tab-content');
+            const buttons = document.getElementsByClassName('tab-button');
+            
+            for (let i = 0; i < contents.length; i++) {
+                contents[i].classList.remove('active');
+                buttons[i].classList.remove('active');
+            }
+            
+            document.getElementById(tabName).classList.add('active');
+            
+            const activeBtn = Array.from(buttons).find(btn => btn.getAttribute('onclick').includes(tabName));
+            if (activeBtn) {
+                activeBtn.classList.add('active');
+            }
+        }
+
+        function parsePartnersData(text) {
+            const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+            const records = [];
+            
+            let currentRecord = null;
+            const isId = (str) => /^\d+$/.test(str);
+            const isTabbed = lines.some(l => l.includes('\t'));
+
+            if (isTabbed) {
+                lines.forEach(line => {
+                    let parts = line.split('\t');
+                    if (parts.length < 2) parts = line.split(/\s{2,}/); 
+                    
+                    if (parts.length >= 2) {
+                         records.push({
+                            name: parts[1] || parts[0],
+                            type: parts[2] || '',
+                            env: parts[3] || '',
+                            statusSource: parts[4] || ''
+                         });
+                    }
+                });
+            } else {
+                lines.forEach(line => {
+                    if (isId(line)) {
+                        if (currentRecord) {
+                            records.push(currentRecord);
+                        }
+                        currentRecord = { name: null, type: null, env: null, statusSource: null };
+                    } else if (currentRecord) {
+                        if (!currentRecord.name) currentRecord.name = line;
+                        else if (!currentRecord.type) currentRecord.type = line;
+                        else if (!currentRecord.env) currentRecord.env = line;
+                        else if (!currentRecord.statusSource) currentRecord.statusSource = line;
+                    }
+                });
+                if (currentRecord && currentRecord.name) {
+                    records.push(currentRecord);
+                }
+            }
+            return records;
+        }
+
+        function checkPlatformMatches() {
             const adsText = document.getElementById('adsInput').value;
             const partnersText = document.getElementById('partnersInput').value;
-            const tableBody = document.getElementById('tableBody');
-            const resultsTable = document.getElementById('resultsTable');
+            const showMissing = document.getElementById('showMissingToggle').checked;
+            const tableBody = document.getElementById('platformTableBody');
+            const resultsTable = document.getElementById('platformTable');
 
             tableBody.innerHTML = '';
 
             if (!adsText.trim() || !partnersText.trim()) {
-                alert("Пожалуйста, заполните оба поля.");
-                return;
+                if (!showMissing && !partnersText.trim()) return; 
             }
 
-            const adsLines = adsText.toLowerCase();
-            const partnersList = partnersText.split('\n');
+            const parsedData = parsePartnersData(partnersText);
+            let results = [];
 
-            partnersList.forEach(partner => {
-                const original = partner.trim();
-                if (!original) return;
+            parsedData.forEach(item => {
+                const originalName = item.name;
+                if (!originalName) return;
 
-                const cleanName = original.replace(/\(.*?\)/g, '').trim();
+                const cleanName = originalName.replace(/\(.*?\)/g, '').trim();
                 
-                if (!cleanName) return;
+                const searchRegex = new RegExp(cleanName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+                const matches = adsText.match(searchRegex);
+                const count = matches ? matches.length : 0;
+                
+                results.push({
+                    name: cleanName,
+                    type: item.type,
+                    env: item.env,
+                    statusSource: item.statusSource,
+                    count: count,
+                    found: count > 0
+                });
+            });
 
-                const isFound = adsLines.includes(cleanName.toLowerCase());
+            results.sort((a, b) => b.count - a.count);
+
+            let visibleCount = 0;
+
+            results.forEach(item => {
+                const sourceStatus = (item.statusSource || '').trim().toLowerCase();
+                const isActive = sourceStatus === 'active';
+
+                if (!showMissing) {
+                    if (!isActive || !item.found) return;
+                }
 
                 const row = document.createElement('tr');
                 
                 const cellName = document.createElement('td');
-                cellName.textContent = cleanName;
+                cellName.textContent = item.name;
+                row.appendChild(cellName);
+
+                const cellType = document.createElement('td');
+                cellType.textContent = item.type || '';
+                row.appendChild(cellType);
+
+                const cellEnv = document.createElement('td');
+                cellEnv.textContent = item.env || '';
+                row.appendChild(cellEnv);
+
+                const cellStatusSource = document.createElement('td');
+                cellStatusSource.textContent = item.statusSource || '';
+                row.appendChild(cellStatusSource);
                 
-                const cellOriginal = document.createElement('td');
-                cellOriginal.textContent = original;
-                
+                const cellStatusAds = document.createElement('td');
+                if (item.found) {
+                    cellStatusAds.textContent = "FOUND";
+                    cellStatusAds.className = "status-found";
+                } else {
+                    cellStatusAds.textContent = "MISSING";
+                    cellStatusAds.className = "status-missing";
+                }
+                row.appendChild(cellStatusAds);
+
+                const cellCount = document.createElement('td');
+                cellCount.textContent = item.count;
+                cellCount.className = "count-cell";
+                row.appendChild(cellCount);
+
+                tableBody.appendChild(row);
+                visibleCount++;
+            });
+
+            if (visibleCount > 0) {
+                resultsTable.style.display = 'table';
+            } else {
+                resultsTable.style.display = 'none';
+            }
+        }
+
+        function normalizeLine(line) {
+            const noComments = line.split('#')[0];
+            const parts = noComments.split(',');
+            const cleanParts = parts.map(p => p.trim()).filter(p => p !== '');
+            return cleanParts.join(', ').toLowerCase();
+        }
+
+        function checkLineMatches() {
+            const adsText = document.getElementById('adsInput').value;
+            const checkLinesText = document.getElementById('checkLinesInput').value;
+            const tableBody = document.getElementById('lineTableBody');
+            const resultsTable = document.getElementById('lineTable');
+
+            tableBody.innerHTML = '';
+
+            if (!adsText.trim() || !checkLinesText.trim()) {
+                alert("Please fill in both the Main App|Ads.txt and Lines to Check.");
+                return;
+            }
+
+            const adsLinesRaw = adsText.split('\n');
+            const adsSet = new Set();
+            
+            adsLinesRaw.forEach(line => {
+                if(!line.trim()) return;
+                adsSet.add(normalizeLine(line));
+            });
+
+            const linesToCheck = checkLinesText.split('\n');
+            
+            linesToCheck.forEach(line => {
+                const trimmedLine = line.trim();
+                if (!trimmedLine) return;
+
+                const normalizedCheck = normalizeLine(trimmedLine);
+                const isFound = adsSet.has(normalizedCheck);
+
+                const row = document.createElement('tr');
+
+                const cellLine = document.createElement('td');
+                cellLine.textContent = trimmedLine;
+                cellLine.className = 'line-cell';
+                row.appendChild(cellLine);
+
                 const cellStatus = document.createElement('td');
                 if (isFound) {
-                    cellStatus.textContent = "НАЙДЕНО";
+                    cellStatus.textContent = "FOUND";
                     cellStatus.className = "status-found";
                 } else {
-                    cellStatus.textContent = "НЕТ В СПИСКЕ";
+                    cellStatus.textContent = "MISSING";
                     cellStatus.className = "status-missing";
                 }
-
-                row.appendChild(cellName);
-                row.appendChild(cellOriginal);
                 row.appendChild(cellStatus);
+
                 tableBody.appendChild(row);
             });
 
