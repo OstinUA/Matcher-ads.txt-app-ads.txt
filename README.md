@@ -1,20 +1,20 @@
 # Ads.txt Checker & Line Matcher
 
-A zero-backend, privacy-first browser utility for validating `ads.txt` and `app-ads.txt` authorization data against SSP partner lists and explicit line-level assertions.
+A privacy-first, browser-native validation utility for auditing `ads.txt` and `app-ads.txt` authorization data against partner lists and canonical line entries.
 
-[![Build](https://img.shields.io/badge/Build-Static%20Site-2F4F4F?style=for-the-badge)](./index.html)
-[![Version](https://img.shields.io/badge/Version-v1.0.0-1f8b4c?style=for-the-badge)](./README.md)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](LICENSE)
-[![Coverage](https://img.shields.io/badge/Coverage-Manual%20Validation-orange?style=for-the-badge)](./index.html)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue?style=for-the-badge)](LICENSE)
+[![Last Commit](https://img.shields.io/github/last-commit/OstinUA/Matcher-ads.txt-app-ads.txt?style=for-the-badge)](https://github.com/OstinUA/Matcher-ads.txt-app-ads.txt/commits)
+[![Repo Size](https://img.shields.io/github/repo-size/OstinUA/Matcher-ads.txt-app-ads.txt?style=for-the-badge)](https://github.com/OstinUA/Matcher-ads.txt-app-ads.txt)
+[![Codebase: HTML/CSS/JS](https://img.shields.io/badge/Stack-HTML%20%7C%20CSS%20%7C%20JavaScript-4c8bf5?style=for-the-badge)](index.html)
 
 > [!NOTE]
-> This project is implemented as a single static HTML file (`index.html`) with embedded CSS and JavaScript. No server, API, or external storage is required.
+> This tool is implemented as a single static page and performs all parsing and matching operations in the client browser.
 
 ## Table of Contents
 
 - [Features](#features)
 - [Tech Stack & Architecture](#tech-stack--architecture)
-  - [Core Stack](#core-stack)
+  - [Core Technologies](#core-technologies)
   - [Project Structure](#project-structure)
   - [Key Design Decisions](#key-design-decisions)
 - [Getting Started](#getting-started)
@@ -29,105 +29,101 @@ A zero-backend, privacy-first browser utility for validating `ads.txt` and `app-
 
 ## Features
 
-- Dual validation workflows for monetization QA:
-  - **Platform Check** validates SSP partner names against the provided `ads.txt` / `app-ads.txt` payload.
-  - **Line Check** performs exact semantic matching of full authorization lines.
-- Flexible SSP partner ingestion:
-  - Supports ID-grouped list input (multi-line blocks).
-  - Supports tab-delimited and multi-space tabular paste from spreadsheets.
-- Match quality controls:
-  - Tracks partner occurrence counts in the authorization text.
-  - Sorts results by descending match frequency for quick triage.
-- Operational filtering:
-  - Optional “Full information” toggle to display full dataset.
-  - Default behavior prioritizes `Active` + `Found` partner rows.
-- Line normalization pipeline:
-  - Removes comments (everything after `#`).
-  - Trims token spacing around comma-separated fields.
-  - Applies case-insensitive canonical matching.
-- Client-side persistence with `localStorage`:
-  - Saves primary authorization content, partner list, line checks, and UI toggle state.
-  - Restores inputs automatically after page refresh.
-- Privacy by design:
-  - All parsing and comparison run in-browser.
-  - No network calls, no telemetry, no data exfiltration.
+- Client-side validation workflow for both `ads.txt` and `app-ads.txt` files.
+- Platform-oriented reconciliation of SSP partner records against a pasted authorization source.
+- Flexible parser for partner inputs:
+  - Supports row blocks (`id`, `name`, `type`, `env`, `status`).
+  - Supports tab-delimited and multi-space-delimited data copied from spreadsheets.
+- Intelligent partner matching:
+  - Cleans partner names (including parenthetical suffix removal).
+  - Escapes regex special characters for safe lookup.
+  - Counts occurrences in the target authorization document.
+- Source metadata visibility for partner rows:
+  - Partner type (`oRTB`, etc.).
+  - Environment context (`In-app`, etc.).
+  - Source lifecycle status (`Active`, etc.).
+- Toggleable output mode for platform checks:
+  - Default focused mode shows only active/found matches.
+  - “Full information” mode reveals all evaluated records, including missing entries.
+- Line-level exactness checks:
+  - Normalizes comma-separated fields.
+  - Ignores whitespace differences.
+  - Ignores inline comments after `#`.
+  - Performs case-insensitive matching.
+- High-signal result views with status color coding (`FOUND` / `MISSING`).
+- Auto-persisted workspace via `localStorage`, including text areas and toggle state.
+- Zero backend dependencies and no server-side data transfer.
 
 > [!IMPORTANT]
-> This tool is intended for validation and reconciliation workflows. It does **not** mutate, publish, or host `ads.txt` / `app-ads.txt` content.
+> Since all content is processed locally, sensitive deal IDs or partner metadata never leave the browser session unless you explicitly share them.
 
 ## Tech Stack & Architecture
 
-### Core Stack
+### Core Technologies
 
-- **HTML5** for document structure and UI layout.
-- **CSS3** for responsive layout, table rendering, status indicators, and tab UI.
-- **Vanilla JavaScript (ES6+)** for state management, parsing, normalization, and match computation.
-- **Browser APIs**:
-  - `localStorage` for persistent local state.
-  - DOM APIs for rendering tab state and validation result tables.
+- `HTML5` for semantic structure and single-page UI layout.
+- `CSS3` for responsive-ish two-column workspace and result table styling.
+- Vanilla `JavaScript (ES6+)` for parser/matcher logic and UI state transitions.
+- Browser `localStorage` API for session persistence.
 
 ### Project Structure
 
 ```text
 Matcher-ads.txt-app-ads.txt/
-├── index.html      # Complete app: markup, styling, and logic
-├── README.md       # Project documentation
-└── LICENSE         # Open-source license
+├── .github/
+│   └── FUNDING.yml
+├── index.html
+├── LICENSE
+└── README.md
 ```
 
 ### Key Design Decisions
 
-1. **Single-file architecture**
-   - Reduces operational complexity.
-   - Makes onboarding trivial for non-engineering AdOps teams.
-   - Enables offline usage when opened locally.
+1. **Single-file application architecture**
+   - Keeps onboarding minimal (no bundlers, no dependency graph).
+   - Enables instant usage with static hosting or direct file opening.
 
-2. **In-browser execution model**
-   - Eliminates backend infrastructure and hosting requirements.
-   - Preserves confidentiality of potentially sensitive monetization relationships.
+2. **Deterministic normalization pipeline**
+   - Line checks normalize both source and probe lines before comparison.
+   - This mitigates false negatives caused by formatting inconsistencies.
 
-3. **Normalization-first matching**
-   - Decreases false negatives caused by whitespace, casing, and comments.
-   - Maintains deterministic behavior for line-level validation.
+3. **Dual-mode partner parser**
+   - Detects spreadsheet-like tabular data and structured block data.
+   - Improves interoperability with AdOps workflows and copied partner exports.
 
-4. **User-centric result triage**
-   - Status highlighting (`FOUND` / `MISSING`) is optimized for rapid visual scanning.
-   - Partner results include metadata (`Type`, `Env`, `Source Status`, `Count`) for context-rich decisions.
+4. **Regex-safe name matching**
+   - Partner names are escaped before search regex creation.
+   - Prevents accidental regex interpretation from special characters.
 
-#### Validation Pipeline (Mermaid)
+5. **Client-side persistence over remote state**
+   - `localStorage` keeps recent input without introducing auth/session complexity.
 
 ```mermaid
 flowchart TD
-    A[User Inputs ads.txt/app-ads.txt] --> B[Choose Validation Mode]
-    B --> C[Platform Check]
-    B --> D[Line Check]
-
-    C --> E[Parse Partner Records]
-    E --> F[Normalize Partner Name]
-    F --> G[Regex Count in Main Text]
-    G --> H[Compute FOUND/MISSING + Count]
-    H --> I[Render Partner Table]
-
-    D --> J[Normalize Main File Lines]
-    J --> K[Build Canonical Set]
-    K --> L[Normalize Lines to Check]
-    L --> M[Set Membership Match]
-    M --> N[Render Line Table]
-
-    A --> O[Persist Inputs to localStorage]
-    O --> P[Restore on Reload]
+    A[User pastes ads.txt or app-ads.txt] --> B[In-browser parser]
+    C[User pastes partner list OR check lines] --> B
+    B --> D{Validation Mode}
+    D -->|Platform Check| E[parsePartnersData]
+    E --> F[Name normalization and regex-safe matching]
+    F --> G[Result sorting and status tagging]
+    G --> H[Platform table rendering]
+    D -->|Line Check| I[normalizeLine for source and probes]
+    I --> J[Set membership comparison]
+    J --> K[Line table rendering]
+    H --> L[Persist UI state to localStorage]
+    K --> L
 ```
 
 > [!TIP]
-> Use the Platform Check for broad partner compliance audits, and Line Check for incident-driven verification (e.g., confirming specific reseller/direct declarations).
+> For repeat audits, keep the browser tab open and iterate on partner input only. The app persists prior content, reducing repetitive paste/setup time.
 
 ## Getting Started
 
 ### Prerequisites
 
-- A modern browser (latest stable `Chrome`, `Edge`, `Firefox`, or `Safari`).
-- Git (optional, only required if cloning).
-- No runtime dependencies (`Node.js`, `Python`, Docker, etc.) are required.
+- Any modern browser (`Chrome`, `Edge`, `Firefox`, `Safari`).
+- Optional local static server for predictable local-origin behavior.
+- Optional `Node.js >= 18` if you want to run linting helpers via `npx`.
 
 ### Installation
 
@@ -138,90 +134,98 @@ git clone https://github.com/OstinUA/Matcher-ads.txt-app-ads.txt.git
 cd Matcher-ads.txt-app-ads.txt
 ```
 
-2. Run locally by opening `index.html`:
+2. Launch locally (choose one):
 
 ```bash
-# Option A: open directly in your browser
-xdg-open index.html  # Linux
-open index.html      # macOS
-start index.html     # Windows (PowerShell/cmd)
+# Option A: open directly
+open index.html
 ```
 
-3. Optional: serve over local HTTP (recommended for uniform behavior):
-
 ```bash
+# Option B: serve over HTTP (recommended)
 python3 -m http.server 8080
-# Then open http://localhost:8080
+# then open http://localhost:8080
 ```
-
-> [!WARNING]
-> If your organization applies strict browser policies, direct `file://` access may restrict some behaviors. In that case, prefer local HTTP serving.
 
 ## Testing
 
-This repository does not currently include an automated test harness. Validation is primarily functional/manual.
+> [!NOTE]
+> The repository currently does not ship with a formal automated unit/integration test suite.
 
-Recommended checks:
+Recommended validation workflow:
 
 ```bash
-# Lint markdown documentation (if markdownlint is available)
-npx markdownlint-cli README.md
-
-# Validate HTML syntax and common issues (if htmlhint is available)
-npx htmlhint index.html
-
-# Run a local server and perform manual smoke tests
+# Static page smoke check
 python3 -m http.server 8080
 ```
 
-Manual test checklist:
+```bash
+# Optional HTML linting
+npx --yes htmlhint index.html
+```
 
-1. Paste a valid `ads.txt` payload and an SSP dataset.
-2. Run **Platform Check** and verify `FOUND`/`MISSING` rows and counts.
-3. Toggle **Full information** and confirm row filtering behavior.
-4. Switch to **Line Check**, paste candidate lines, and validate match statuses.
-5. Refresh page and confirm state restoration via `localStorage`.
+```bash
+# Optional formatting check (if Prettier is preferred locally)
+npx --yes prettier --check README.md index.html
+```
+
+Manual functional checks:
+
+1. Paste a known `ads.txt` sample and a known partner dataset.
+2. Confirm `FOUND/MISSING` outcomes for expected partners.
+3. Toggle `Full information` and verify visibility changes.
+4. Run line checks with intentionally varied spacing/case/comments.
 
 ## Deployment
 
-Because this is a static application, deployment is straightforward:
+Because this is a static front-end utility, deployment is straightforward:
 
-- **Static hosting targets**: GitHub Pages, Netlify, Vercel (static mode), S3 + CloudFront, Nginx.
-- **Artifact**: deploy `index.html` (plus `README.md` and `LICENSE` optionally).
-- **No build step required**.
+- Host `index.html` on any static host (`GitHub Pages`, `Netlify`, `Vercel static`, `S3 + CloudFront`, internal web servers).
+- Set aggressive cache headers only when release versioning is in place.
+- Prefer immutable deployment paths or cache-busting query/version strategy.
 
-### Minimal CI/CD Strategy
+Example Docker-based static serving:
 
-1. On push to `main`, run lightweight checks (Markdown + HTML lint).
-2. Publish static files to your chosen host.
-3. Invalidate CDN cache if applicable.
+```dockerfile
+FROM nginx:stable-alpine
+COPY index.html /usr/share/nginx/html/index.html
+EXPOSE 80
+```
 
-Example GitHub Pages approach:
+```bash
+docker build -t ads-txt-checker .
+docker run --rm -p 8080:80 ads-txt-checker
+```
 
-- Enable Pages for the repository.
-- Serve from root branch (`/`), or move files into `/docs` and configure Pages accordingly.
-
-> [!CAUTION]
-> This tool validates content but does not guarantee business compliance with every SSP requirement. Always align results with your contractual and policy obligations.
+> [!WARNING]
+> If deployed in a shared workstation environment, remember `localStorage` persists per browser profile. Clear browser storage after handling sensitive partner data.
 
 ## Usage
 
-### 1) Platform Check Workflow
-
-1. Paste full `ads.txt` or `app-ads.txt` content into the main input.
-2. Paste SSP partner data in either grouped format or tabular format.
-3. Click `Check Platforms`.
-4. Review output columns:
-   - `Partner`
-   - `Type`
-   - `Env`
-   - `Source Status`
-   - `App|Ads.txt Status`
-   - `Count`
-
-Example partner input (grouped):
+### 1) Platform Check Mode
 
 ```text
+1. Paste your primary ads authorization file into the top textarea.
+2. Open the Platform Check tab.
+3. Paste SSP partner rows (block format or tabular format).
+4. Click "Check Platforms".
+5. Review type/env/source-status context with FOUND/MISSING and count.
+```
+
+### 2) Line Check Mode
+
+```text
+1. Keep the main ads/app-ads input populated.
+2. Switch to Line Check.
+3. Paste one candidate line per row.
+4. Click "Check Lines".
+5. Validate normalized exact-match results.
+```
+
+### Input Pattern Examples
+
+```txt
+# Block format example
 1
 Google
 oRTB
@@ -229,72 +233,49 @@ In-app
 Active
 
 2
-Adsolut
-SDK
+ExampleExchange
+oRTB
 Web
 Inactive
 ```
 
-### 2) Line Check Workflow
-
-1. Paste full `ads.txt`/`app-ads.txt` in the main input.
-2. Add one expected authorization line per row in `Check lines`.
-3. Click `Check Lines`.
-4. Inspect `FOUND`/`MISSING` result statuses.
-
-Example lines to validate:
-
-```text
-google.com, pub-1234567890123456, DIRECT, f08c47fec0942fa0
-rubiconproject.com, 12345, RESELLER, 0bfd66d529a55807
+```txt
+# Candidate line examples (one per row)
+google.com, pub-123456789, DIRECT, f08c47fec0942fa0
+example.com,pub-00001,reseller
 ```
 
-### 3) Normalization Behavior (Reference)
-
-```javascript
-// Conceptual behavior used by the checker:
-// 1) Strip comments after '#'
-// 2) Split by ',' and trim each token
-// 3) Re-join in canonical form and lower-case for matching
-const canonical = line
-  .split('#')[0]
-  .split(',')
-  .map((p) => p.trim())
-  .filter(Boolean)
-  .join(', ')
-  .toLowerCase();
-```
+> [!CAUTION]
+> Partner matching in Platform Check is name-based occurrence matching, not canonical `ads.txt` field validation. Use Line Check for strict row-level verification.
 
 ## Configuration
 
-The application has no external config file, but runtime behavior is influenced by browser state and input formats.
+This project does not require `.env` files, runtime flags, or external configuration files.
 
-### Persisted Keys (`localStorage`)
+### Runtime Behavior Controls
 
-- `adsInput`: raw primary authorization file text.
-- `partnersInput`: raw SSP partner dataset.
-- `checkLinesInput`: raw candidate lines for line-level check.
-- `showMissingToggle`: boolean flag controlling table detail mode.
+- UI toggle:
+  - `Full information` (`showMissingToggle`) controls whether all rows are shown or only active/found rows.
+- Persistence keys in `localStorage`:
+  - `adsInput`
+  - `partnersInput`
+  - `checkLinesInput`
+  - `showMissingToggle`
 
-### Input Contract Expectations
+### Operational Notes
 
-- `adsInput`:
-  - Accepts newline-delimited entries from an `ads.txt`/`app-ads.txt` file.
-  - Supports comment lines and inline comments.
-- `partnersInput`:
-  - Accepts either grouped records (`id -> name -> type -> env -> status`) or tab-delimited rows.
-- `checkLinesInput`:
-  - Expects one candidate authorization line per line.
+- Clearing persisted state:
 
-### Startup/Environment Flags
-
-- No CLI flags.
-- No `.env` variables.
-- No build-time configuration required.
+```js
+localStorage.removeItem("adsInput");
+localStorage.removeItem("partnersInput");
+localStorage.removeItem("checkLinesInput");
+localStorage.removeItem("showMissingToggle");
+```
 
 ## License
 
-This project is licensed under the **MIT License**. See `LICENSE` for full legal text.
+This project is licensed under the `Apache License 2.0`. See [`LICENSE`](LICENSE) for the full text.
 
 ## Support the Project
 
